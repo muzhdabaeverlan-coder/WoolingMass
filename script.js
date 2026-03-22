@@ -7,6 +7,7 @@ const firebaseConfig = {
     appId: "1:877867450311:web:5d92a9c650d213b9a6e3e2"
 };
 
+// Инициализация
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -16,7 +17,41 @@ let activeChatUser = null;
 let mediaRecorder;
 let audioChunks = [];
 
-// === АВТОРИЗАЦИЯ ===
+// === ФУНКЦИЯ ВХОДА ===
+async function handleLogin() {
+    const email = document.getElementById('authEmail').value;
+    const pass = document.getElementById('authPass').value;
+    const nick = document.getElementById('regNick').value;
+
+    if (!email || !pass) {
+        alert("Заполни почту и пароль!");
+        return;
+    }
+
+    try {
+        console.log("Попытка входа...");
+        await auth.signInWithEmailAndPassword(email, pass);
+        document.getElementById('sphere').classList.add('explode');
+    } catch (e) {
+        console.log("Вход не удался, пробуем регистрацию...");
+        if (nick) {
+            try {
+                const res = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.collection("users").doc(res.user.uid).set({ nickname: nick });
+                document.getElementById('sphere').classList.add('explode');
+            } catch (regErr) {
+                alert("Ошибка регистрации: " + regErr.message);
+            }
+        } else {
+            alert("Аккаунт не найден. Введи никнейм, чтобы зарегистрироваться!");
+        }
+    }
+}
+
+// Привязываем кнопку
+document.getElementById('loginBtn').addEventListener('click', handleLogin);
+
+// === ПРОВЕРКА СЕССИИ ===
 auth.onAuthStateChanged(async user => {
     const authBox = document.getElementById('authContainer');
     const appBox = document.getElementById('appContainer');
@@ -25,31 +60,15 @@ auth.onAuthStateChanged(async user => {
         const doc = await db.collection("users").doc(user.uid).get();
         document.getElementById('myNickDisplay').textContent = doc.data()?.nickname || "User";
         authBox.style.display = 'none';
-        appBox.style.display = 'flex';
+        appBox.classList.remove('app-hidden');
+        appBox.classList.add('app-container');
     } else {
         authBox.style.display = 'flex';
-        appBox.style.display = 'none';
+        appBox.className = 'app-hidden';
     }
 });
 
-document.getElementById('loginBtn').onclick = async () => {
-    const email = document.getElementById('authEmail').value;
-    const pass = document.getElementById('authPass').value;
-    const nick = document.getElementById('regNick').value;
-    if (!email || !pass) return;
-
-    try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        document.getElementById('sphere').classList.add('explode');
-    } catch (e) {
-        if (nick) {
-            const res = await auth.createUserWithEmailAndPassword(email, pass);
-            await db.collection("users").doc(res.user.uid).set({ nickname: nick });
-            document.getElementById('sphere').classList.add('explode');
-        } else alert("Аккаунт не найден. Введите ник для регистрации.");
-    }
-};
-
+// Выход
 document.getElementById('logoutBtn').onclick = () => auth.signOut().then(() => location.reload());
 document.getElementById('settingsBtn').onclick = () => document.getElementById('settingsModal').style.display = 'flex';
 
@@ -60,20 +79,17 @@ document.getElementById('favoritesBtn').onclick = () => {
     listenMessages();
 };
 
-// === ОТПРАВКА МЕДИА (ФОТО/ВИДЕО) ===
+// === ОТПРАВКА ФАЙЛОВ ===
 document.getElementById('attachBtn').onclick = () => document.getElementById('fileInp').click();
 document.getElementById('fileInp').onchange = async (e) => {
     const file = e.target.files[0];
     if (!file || !activeChatUser) return;
 
-    try {
-        const ref = storage.ref(`chats/${Date.now()}_${file.name}`);
-        const snap = await ref.put(file);
-        const url = await snap.ref.getDownloadURL();
-        const fileType = file.type.startsWith('image') ? 'image' : 'video';
-        
-        await sendMsg({ type: fileType, url: url });
-    } catch (err) { alert("Ошибка загрузки: " + err.message); }
+    const ref = storage.ref(`chats/${Date.now()}_${file.name}`);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    const type = file.type.startsWith('image') ? 'image' : 'video';
+    await sendMsg({ type, url });
 };
 
 // === ГОЛОСОВЫЕ ===
@@ -82,21 +98,19 @@ document.getElementById('micBtn').onclick = async () => {
         mediaRecorder.stop();
         document.getElementById('micBtn').classList.remove('mic-active');
     } else {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = async () => {
-                const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                const ref = storage.ref(`voices/${Date.now()}.webm`);
-                const snap = await ref.put(blob);
-                const url = await snap.ref.getDownloadURL();
-                await sendMsg({ type: 'voice', url: url });
-            };
-            mediaRecorder.start();
-            document.getElementById('micBtn').classList.add('mic-active');
-        } catch (err) { alert("Микрофон недоступен!"); }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const ref = storage.ref(`voices/${Date.now()}.webm`);
+            await ref.put(blob);
+            const url = await ref.getDownloadURL();
+            await sendMsg({ type: 'voice', url });
+        };
+        mediaRecorder.start();
+        document.getElementById('micBtn').classList.add('mic-active');
     }
 };
 
@@ -104,7 +118,7 @@ document.getElementById('micBtn').onclick = async () => {
 document.getElementById('sendBtn').onclick = () => {
     const text = document.getElementById('msgInp').value;
     if (text && activeChatUser) {
-        sendMsg({ type: 'text', text: text });
+        sendMsg({ type: 'text', text });
         document.getElementById('msgInp').value = "";
     }
 };
@@ -118,10 +132,10 @@ async function sendMsg(data) {
     });
 }
 
-let currentSub = null;
+let sub = null;
 function listenMessages() {
-    if (currentSub) currentSub();
-    currentSub = db.collection("messages").orderBy("timestamp", "asc").onSnapshot(snap => {
+    if (sub) sub();
+    sub = db.collection("messages").orderBy("timestamp", "asc").onSnapshot(snap => {
         const view = document.getElementById('msgView');
         view.innerHTML = "";
         snap.forEach(doc => {
@@ -144,23 +158,17 @@ function listenMessages() {
     });
 }
 
-// === ПОИСК ===
+// Поиск
 document.getElementById('searchBtn').onclick = async () => {
     const nick = document.getElementById('userSearchInp').value;
-    if(!nick) return;
     const snap = await db.collection("users").where("nickname", "==", nick).get();
     const list = document.getElementById('chatList');
     list.innerHTML = "";
-    if(snap.empty) return alert("Никто не найден");
     snap.forEach(doc => {
         const div = document.createElement('div');
         div.className = "chat-item animated-hover";
         div.textContent = doc.data().nickname;
-        div.onclick = () => { 
-            activeChatUser = doc.id; 
-            document.getElementById('currentChatNick').textContent = doc.data().nickname; 
-            listenMessages(); 
-        };
+        div.onclick = () => { activeChatUser = doc.id; document.getElementById('currentChatNick').textContent = doc.data().nickname; listenMessages(); };
         list.appendChild(div);
     });
 };
