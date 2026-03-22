@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Wooling Messenger Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="authContainer" class="overlay" style="display: flex;">
+        <div class="auth-card">
+            <h1>Wooling Elite</h1>
+            <input type="text" id="regNick" placeholder="Никнейм (для регистрации)">
+            <input type="email" id="authEmail" placeholder="Email">
+            <input type="password" id="authPass" placeholder="Пароль">
+            <button id="loginBtn" class="btn-primary animated-hover">ВОЙТИ</button>
+        </div>
+    </div>
+
+    <div id="sphere" class="sphere"></div>
+
+    <div id="appContainer" class="app-hidden">
+        <aside class="sidebar">
+            <div class="my-profile">
+                <span id="myNickDisplay">Загрузка...</span>
+                <div class="profile-btns">
+                    <button id="settingsBtn" class="neo-btn animated-hover">⚙️</button>
+                    <button id="logoutBtn" class="neo-btn ico-logout animated-hover">🚪</button>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="chat-item special-item animated-hover" id="favoritesBtn">⭐ Избранное</div>
+            </div>
+
+            <div class="search-area">
+                <div class="search-box-large">
+                    <input type="text" id="userSearchInp" placeholder="Поиск по никнейму...">
+                    <button id="searchBtn">Найти</button>
+                </div>
+            </div>
+            
+            <div id="chatList" class="chat-list"></div>
+        </aside>
+
+        <main class="chat-window">
+            <header class="chat-header">
+                <span id="currentChatNick">Выберите чат</span>
+            </header>
+            
+            <div id="msgView" class="msg-view"></div>
+            
+            <div class="input-area">
+                <button id="attachBtn" class="neo-btn animated-hover">📎</button>
+                <input type="file" id="fileInp" style="display:none" accept="image/*,video/*">
+                
+                <input type="text" id="msgInp" placeholder="Написать сообщение...">
+                
+                <button id="micBtn" class="neo-btn animated-hover">🎤</button>
+                <button id="sendBtn" class="neo-btn send-btn animated-hover">➤</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content auth-card">
+            <h2>Настройки</h2>
+            <p style="color: #888;">Версия: 1.2.5 Gold</p>
+            <p>Тема: <span style="color: var(--neon)">Ultra Neon</span></p>
+            <button class="btn-primary animated-hover" onclick="document.getElementById('settingsModal').style.display='none'">Закрыть</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
