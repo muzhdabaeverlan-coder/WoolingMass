@@ -6,13 +6,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="authContainer" class="overlay" style="display: none;">
+    <div id="authContainer" class="overlay" style="display: flex;">
         <div class="auth-card">
             <h1>Wooling Elite</h1>
             <input type="text" id="regNick" placeholder="Никнейм (для регистрации)">
             <input type="email" id="authEmail" placeholder="Email">
             <input type="password" id="authPass" placeholder="Пароль">
-            <button id="loginBtn" class="btn-primary">ВОЙТИ</button>
+            <button id="loginBtn" class="btn-primary animated-hover">ВОЙТИ</button>
         </div>
     </div>
 
@@ -23,8 +23,8 @@
             <div class="my-profile">
                 <span id="myNickDisplay">Загрузка...</span>
                 <div class="profile-btns">
-                    <button id="settingsBtn" class="neo-btn">⚙️</button>
-                    <button id="logoutBtn" class="neo-btn ico-logout">🚪</button>
+                    <button id="settingsBtn" class="neo-btn animated-hover">⚙️</button>
+                    <button id="logoutBtn" class="neo-btn ico-logout animated-hover">🚪</button>
                 </div>
             </div>
             
@@ -64,7 +64,7 @@
     <div id="settingsModal" class="modal">
         <div class="modal-content auth-card">
             <h2>Настройки</h2>
-            <p style="color: #888;">Версия: 1.2.0 Gold</p>
+            <p style="color: #888;">Версия: 1.2.5 Gold</p>
             <p>Тема: <span style="color: var(--neon)">Ultra Neon</span></p>
             <button class="btn-primary animated-hover" onclick="document.getElementById('settingsModal').style.display='none'">Закрыть</button>
         </div>
